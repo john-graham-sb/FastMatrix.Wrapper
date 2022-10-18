@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "FastMatrix.Timer": {
+      "commandName": "Project",
+      "nativeDebugging": true,
+      "hotReloadEnabled": false
+    }
+  }
+}
