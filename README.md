@@ -1,6 +1,8 @@
 # FastMatrix.Wrapper
 
-Matrix library written in C++ and wrapped in a C# class. It also performs linear regression and computes predictions (See unit tests).
+Matrix library written in C++ and wrapped in a C# class. 
+
+As well as providing most Matrix operations, it also performs linear regression and computes predictions (See unit tests).
 
 Performing linear regression where,
 
