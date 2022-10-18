@@ -2,7 +2,7 @@
 
 Matrix library written in C++ and wrapped in a C# class. 
 
-As well as providing most Matrix operations, it also performs linear regression and computes predictions (See unit tests).
+As well as providing most matrix operations, it also performs linear regression and computes predictions (See unit tests).
 
 Performing linear regression where,
 
