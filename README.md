@@ -4,8 +4,8 @@ Matrix library written in C++ and wrapped in a C# class. It also performs linear
 
 Performing linear regression where,
 
-- X: a 100 x 2 matrix 
-- y: a 100 by 1 matrix
+- X: a 20 x 2 matrix 
+- y: a 20 by 1 matrix
 - (theta: a 2 x 1 matrix)
 
 - Number of iterations: 1,000,000
