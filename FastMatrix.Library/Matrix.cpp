@@ -8,32 +8,84 @@ float FastMatrix::Get(int rowIndex, int columnIndex)
 
 void FastMatrix::Set(float value, int rowIndex, int columnIndex)
 {
-	 this->_matrix[rowIndex + columnIndex * this->_rowCount] = value;
+	this->_matrix[rowIndex + columnIndex * this->_rowCount] = value;
 }
 
-float FastMatrix::Get(int index)
-{
-	return this->_matrix[index];
-}
-
-void FastMatrix::Set(float value, int index)
-{
-	this->_matrix[index] = value;
-}
-
-float FastMatrix::ComputePrediction(FastMatrix* x)
+float FastMatrix::ComputePrediction(FastMatrix* pXMatrix)
 {
 	float prediction = 0;
-	
-	for (int index = 0; index < x->_columnCount; index++)
-	{
-		float value1 = x->Get(index);
-		float value2 = Get(index);
 
-		prediction += value1 * value2;
+	for (int matrixRowIndex = 0; matrixRowIndex < _rowCount; matrixRowIndex++)
+	{
+		float theta = Get(matrixRowIndex, 0);
+
+		float x = pXMatrix->Get(0, matrixRowIndex);
+
+		prediction += theta * x;
 	}
 
 	return prediction;
+}
+
+FastMatrix* FastMatrix::AddOnesColumn(FastMatrix* pMatrix)
+{
+	FastMatrix* pNewMatrix = new FastMatrix(pMatrix->_rowCount, pMatrix->_columnCount + 1);
+
+	// Set 1's in first column of new matrix.
+	for (int matrixRowIndex = 0; matrixRowIndex < pNewMatrix->_rowCount; matrixRowIndex++)
+	{
+		pNewMatrix->Set(1, matrixRowIndex, 0);
+	}
+
+	// Copy the contents of the original matrix into the new matrix, advanced one column.
+	for (int matrixColumnIndex = 0; matrixColumnIndex < pMatrix->_columnCount; matrixColumnIndex++)
+	{
+		for (int matrixRowIndex = 0; matrixRowIndex < pMatrix->_rowCount; matrixRowIndex++)
+		{
+			float value = pMatrix->Get(matrixRowIndex, matrixColumnIndex);
+
+			pNewMatrix->Set(value, matrixRowIndex, matrixColumnIndex + 1);
+		}
+	}
+
+	return pNewMatrix;
+}
+
+FastMatrix* FastMatrix::AddSquaredColumns(FastMatrix* pMatrix)
+{
+	int newColumnCount = FastMatrix::ConsequtiveSum(1, pMatrix->_columnCount) + pMatrix->_columnCount;
+
+	FastMatrix* pNewMatrix = new FastMatrix(pMatrix->_rowCount, newColumnCount);
+
+	for (int matrixRowIndex = 0; matrixRowIndex < pMatrix->_rowCount; matrixRowIndex++)
+	{
+		for (int matrixColumnIndex = 0; matrixColumnIndex < pMatrix->_columnCount; matrixColumnIndex++)
+		{
+			float value = pMatrix->Get(matrixRowIndex, matrixColumnIndex);
+
+			pNewMatrix->Set(value, matrixRowIndex, matrixColumnIndex);
+		}
+	}
+
+	for (int newMatrixRowIndex = 0; newMatrixRowIndex < pNewMatrix->_rowCount; newMatrixRowIndex++)
+	{
+		int currentStartIndex = -1;
+
+		for (int newMatrixColumnIndex = pMatrix->_columnCount; newMatrixColumnIndex < pNewMatrix->_columnCount; newMatrixColumnIndex++)
+		{
+			currentStartIndex++;
+
+			for (int columnIndex = currentStartIndex; columnIndex < pMatrix->_columnCount; columnIndex++)
+			{
+				float value1 = pMatrix->Get(newMatrixRowIndex, columnIndex);
+				float value2 = pMatrix->Get(newMatrixRowIndex, currentStartIndex);
+
+				pNewMatrix->Set(value1 * value2, newMatrixRowIndex, newMatrixColumnIndex + columnIndex);
+			}
+		}
+	}
+
+	return pNewMatrix;
 }
 
 void FastMatrix::ZeroValues()
@@ -42,7 +94,7 @@ void FastMatrix::ZeroValues()
 	{
 		for (int matrixRowIndex = 0; matrixRowIndex < _rowCount; matrixRowIndex++)
 		{
-			Set(0, matrixRowIndex + matrixColumnIndex * _rowCount);
+			Set(0, matrixRowIndex, matrixColumnIndex);
 		}
 	}
 }
@@ -52,15 +104,17 @@ FastMatrix* FastMatrix::DescendGradient(FastMatrix* X, FastMatrix* y, float alph
 	float scalar = alpha / X->_rowCount;
 
 	FastMatrix* xTransformed = FastMatrix::ComplexConjugateTransform(X);
+
 	FastMatrix* theta = new FastMatrix(X->_columnCount, 1);
 	theta->ZeroValues();
 
-	FastMatrix* hypothesis;
+	FastMatrix* hypothesis = new FastMatrix(X->_rowCount, theta->_columnCount);
+
 	FastMatrix* derivative;
-	
+
 	for (int iterationIndex = 0; iterationIndex < numIterations; iterationIndex++)
 	{
-		hypothesis = FastMatrix::Multiply(X, theta);
+		FastMatrix::MultiplyUpdate(hypothesis, X, theta);
 
 		hypothesis->SubtractUpdate(y);
 
@@ -70,10 +124,10 @@ FastMatrix* FastMatrix::DescendGradient(FastMatrix* X, FastMatrix* y, float alph
 
 		theta->SubtractUpdate(derivative);
 
-		delete(hypothesis);
 		delete(derivative);
 	}
 
+	delete(hypothesis);
 	delete(xTransformed);
 
 	return theta;
@@ -82,14 +136,14 @@ FastMatrix* FastMatrix::DescendGradient(FastMatrix* X, FastMatrix* y, float alph
 FastMatrix* FastMatrix::ComplexConjugateTransform(FastMatrix* matrix)
 {
 	FastMatrix* transformedMatrix = new FastMatrix(matrix->_columnCount, matrix->_rowCount);
-	
-	for(int matrixColumnIndex = 0; matrixColumnIndex < matrix->_columnCount; matrixColumnIndex++)
+
+	for (int matrixColumnIndex = 0; matrixColumnIndex < matrix->_columnCount; matrixColumnIndex++)
 	{
 		for (int matrixRowIndex = 0; matrixRowIndex < matrix->_rowCount; matrixRowIndex++)
 		{
-			float value = matrix->Get(matrixRowIndex + matrixColumnIndex * matrix->_rowCount);
+			float value = matrix->Get(matrixRowIndex, matrixColumnIndex);
 
-			transformedMatrix->Set(value, matrixColumnIndex + matrixRowIndex * transformedMatrix->_rowCount);
+			transformedMatrix->Set(value, matrixColumnIndex, matrixRowIndex);
 		}
 	}
 
@@ -114,17 +168,18 @@ FastMatrix* FastMatrix::Add(FastMatrix* matrix1, FastMatrix* matrix2)
 	return sumMatrix;
 }
 
-void FastMatrix::SubtractUpdate(FastMatrix* matrix2)
-{
 
+// ..Update() functions eliminate the need to create then delete objects. 
+void FastMatrix::SubtractUpdate(FastMatrix* pMatrix2)
+{
 	for (int rowIndex = 0; rowIndex < _rowCount; rowIndex++)
 	{
 		for (int columnIndex = 0; columnIndex < _columnCount; columnIndex++)
 		{
-			float value1 = Get(rowIndex, columnIndex);
-			float value2 = matrix2->Get(rowIndex, columnIndex);
+			float firstValue = Get(rowIndex, columnIndex);
+			float secondValue = pMatrix2->Get(rowIndex, columnIndex);
 
-			Set(value1 - value2, rowIndex, columnIndex);
+			Set(firstValue - secondValue, rowIndex, columnIndex);
 		}
 	}
 }
@@ -137,10 +192,10 @@ FastMatrix* FastMatrix::Subtract(FastMatrix* matrix1, FastMatrix* matrix2)
 	{
 		for (int columnIndex = 0; columnIndex < matrix1->_columnCount; columnIndex++)
 		{
-			float value1 = matrix1->Get(rowIndex, columnIndex);
-			float value2 = matrix2->Get(rowIndex, columnIndex);
+			float firstValue = matrix1->Get(rowIndex, columnIndex);
+			float secondValue = matrix2->Get(rowIndex, columnIndex);
 
-			differenceMatrix->Set(value1 - value2, rowIndex, columnIndex);
+			differenceMatrix->Set(firstValue - secondValue, rowIndex, columnIndex);
 		}
 	}
 
@@ -168,6 +223,7 @@ FastMatrix* FastMatrix::ScalarMultiply(float scalar, FastMatrix* matrix)
 
 	return scaledMatrix;
 }
+
 void FastMatrix::ScalarMultiplyUpdate(float scalar)
 {
 	for (int rowIndex = 0; rowIndex < _rowCount; rowIndex++)
@@ -193,15 +249,35 @@ FastMatrix* FastMatrix::Multiply(FastMatrix* matrix1, FastMatrix* matrix2)
 
 			for (int _columnIndex = 0; _columnIndex < matrix1->_columnCount; _columnIndex++)
 			{
-				float value1 = matrix1->Get(_rowIndex + _columnIndex * matrix1->_rowCount);
-				float value2 = matrix2->Get(_columnIndex + _productColumnIndex * matrix2->_rowCount);
+				float value1 = matrix1->Get(_rowIndex, _columnIndex);
+				float value2 = matrix2->Get(_columnIndex, _productColumnIndex);
 
 				value += value1 * value2;
 			}
 
-			productMatrix->Set(value, _rowIndex + _productColumnIndex * matrix1->_rowCount);
+			productMatrix->Set(value, _rowIndex, _productColumnIndex);
 		}
 	}
 
 	return productMatrix;
+}
+void FastMatrix::MultiplyUpdate(FastMatrix* pProductMatrix, FastMatrix* pMatrix1, FastMatrix* pMatrix2)
+{
+	for (int _productColumnIndex = 0; _productColumnIndex < pMatrix2->_columnCount; _productColumnIndex++)
+	{
+		for (int _rowIndex = 0; _rowIndex < pMatrix1->_rowCount; _rowIndex++)
+		{
+			float value = 0;
+
+			for (int _columnIndex = 0; _columnIndex < pMatrix1->_columnCount; _columnIndex++)
+			{
+				float value1 = pMatrix1->Get(_rowIndex, _columnIndex);
+				float value2 = pMatrix2->Get(_columnIndex,  _productColumnIndex);
+
+				value += value1 * value2;
+			}
+
+			pProductMatrix->Set(value, _rowIndex,  _productColumnIndex);
+		}
+	}
 }

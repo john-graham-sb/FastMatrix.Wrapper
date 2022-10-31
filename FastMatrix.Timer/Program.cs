@@ -1,93 +1,54 @@
 ﻿using FastMatrix.Wrapper;
 
-Matrix X = new(20, 2);
-X[0, 0] = 1;
-X[1, 0] = 2;
-X[2, 0] = 3;
-X[3, 0] = 4;
-X[4, 0] = 5;
-X[5, 0] = 6;
-X[6, 0] = 7;
-X[7, 0] = 8;
-X[8, 0] = 9;
-X[9, 0] = 10;
-X[10, 0] = 11;
-X[11, 0] = 12;
-X[12, 0] = 13;
-X[13, 0] = 14;
-X[14, 0] = 15;
-X[15, 0] = 16;
-X[16, 0] = 17;
-X[17, 0] = 18;
-X[18, 0] = 19;
-X[19, 0] = 20;
-
-X[0, 1] = 1;
-X[1, 1] = 1;
-X[2, 1] = 1;
-X[3, 1] = 1;
-X[4, 1] = 1;
-X[5, 1] = 1;
-X[6, 1] = 1;
-X[7, 1] = 1;
-X[8, 1] = 1;
-X[9, 1] = 1;
-X[10, 1] = 1;
-X[11, 1] = 1;
-X[12, 1] = 1;
-X[13, 1] = 1;
-X[14, 1] = 1;
-X[15, 1] = 1;
-X[16, 1] = 1;
-X[17, 1] = 1;
-X[18, 1] = 1;
-X[19, 1] = 1;
-
-Matrix y = new(20, 1);
-y[0, 0] = 1;
-y[1, 0] = 2;
-y[2, 0] = 3;
-y[3, 0] = 4;
-y[4, 0] = 5;
-y[5, 0] = 6;
-y[6, 0] = 7;
-y[7, 0] = 8;
-y[8, 0] = 9;
-y[9, 0] = 10;
-y[10, 0] = 11;
-y[11, 0] = 12;
-y[12, 0] = 13;
-y[13, 0] = 14;
-y[14, 0] = 15;
-y[15, 0] = 16;
-y[16, 0] = 17;
-y[17, 0] = 18;
-y[18, 0] = 19;
-y[19, 0] = 20;
-
-int avgMilliseconds = 0;
-
-for (int i = 0; i < 20; i++)
+if (Matrix.CreateFromCSVFile(out Matrix X, out Matrix y, @"C:\Users\Sarah Sim\Source\Repos\FastMatrix.Wrapper\FastMatrix.UnitTests\Test Data\imageQuality.csv", 2000))
 {
-    var startTime = DateTime.Now;
+    Console.WriteLine("Created Matrix from CSV file...");
 
-    Matrix theta = Matrix.DescendGradient(X, y, 0.1F, 999999);
+    using Matrix augmentedX1 = Matrix.AddSquaredColumns(X);
 
-    var endTime = DateTime.Now;
+    float v1 = augmentedX1[0, 0];
+    float v2 = augmentedX1[0, 1];
+    float v3 = augmentedX1[0, 2];
+    float v4 = augmentedX1[0, 3];
+    float v5 = augmentedX1[0, 4];
 
-    TimeSpan timeSpan = endTime - startTime;
+    Console.WriteLine("Augmented X...");
 
-    avgMilliseconds += timeSpan.Milliseconds;
+    using Matrix theta = new(5, 1);
 
-    Console.WriteLine($" Accumulated Time Difference (ms) = {avgMilliseconds}");
+    using Matrix theta2 = Matrix.DescendGradient(augmentedX1, y, 0.00000000000000000001F, 50000);
 
-    /*Matrix newX = new(3, 2);
-    newX[0, 0] = 1;
-    newX[1, 0] = 5;
+    float v6 = theta2[0, 0];
+    float v7 = theta2[0, 1];
+    float v8 = theta2[0, 2];
+    float v9 = theta2[0, 3];
+    float v10 = theta2[0, 4];
 
-    float prediction = theta.ComputePrediction(newX);*/
+    Console.WriteLine("Descended gradient...");
+
+    using (Matrix newX1 = new(1, 5))
+    {
+        newX1[0, 0] = 4378;
+        newX1[0, 1] = 1900;
+        newX1[0, 2] = 4378 * 4378;
+        newX1[0, 3] = 4378 * 1900;
+        newX1[0, 4] = 1900 * 1900;
+
+        float prediction1 = theta2.ComputePrediction(newX1);
+
+        Console.WriteLine($"Prediction 1 = {prediction1}");
+    }
+
+    using (Matrix newX2 = new(1, 5))
+    {
+        newX2[0, 0] = 2397;
+        newX2[0, 1] = 1711;
+        newX2[0, 2] = 2397 * 2397;
+        newX2[0, 3] = 2397 * 1711;
+        newX2[0, 4] = 1711 * 1711;
+
+        float prediction2 = theta2.ComputePrediction(newX2);
+
+        Console.WriteLine($"Prediction 2 = {prediction2}");
+    }
 }
-
-avgMilliseconds = avgMilliseconds / 10;
-
-Console.WriteLine($" Average Time Difference (ms) = {avgMilliseconds}");

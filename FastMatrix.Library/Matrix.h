@@ -6,6 +6,18 @@ private:
 	int _rowCount;
 	int _columnCount;
 
+	static int ConsequtiveSum(int min, int max)
+	{
+		int sum = 0;
+
+		for (int i = min; i <= max; i++)
+		{
+			sum += i;
+		}
+
+		return sum;
+	}
+
 public:
 
 	FastMatrix(int rowCount, int columnCount)
@@ -16,93 +28,130 @@ public:
 		this->_matrix = new float[rowCount * columnCount];
 	}
 
+	int GetRowCount()
+	{
+		return _rowCount;
+	}
+
+	int GetColumnCount()
+	{
+		return _columnCount;
+	}
+
 	float Get(int rowIndex, int columnIndex);
 
-	void Set(float number, int rowIndex, int columnIndex);
+	void Set(float value, int rowIndex, int columnIndex);
 
-	float Get(int index);
+	float ComputePrediction(FastMatrix* pXMatrix);
 
-	void Set(float number, int index);
+	static FastMatrix* AddSquaredColumns(FastMatrix* pMatrix);
 
-	float ComputePrediction(FastMatrix* x);
+	static FastMatrix* AddOnesColumn(FastMatrix* pMatrix);
 
 	void ZeroValues();
 
-	void SubtractUpdate(FastMatrix* matrix2);
+	void SubtractUpdate(FastMatrix* pMatrix2);
 
-	static FastMatrix* Subtract(FastMatrix* matrix1, FastMatrix* matrix2);
+	static FastMatrix* Subtract(FastMatrix* pMatrix1, FastMatrix* pMatrix2);
 
-	static FastMatrix* Add(FastMatrix* matrix1, FastMatrix* matrix2);
+	static FastMatrix* Add(FastMatrix* pMatrix1, FastMatrix* pMatrix2);
 
-	static FastMatrix* ScalarDivide(FastMatrix* matrix, float scalar);
+	static FastMatrix* ScalarDivide(FastMatrix* pMatrix, float scalar);
 
-	static FastMatrix* ScalarMultiply(float scalar, FastMatrix* matrix2);
+	static FastMatrix* ScalarMultiply(float scalar, FastMatrix* pMatrix);
 
 	void ScalarMultiplyUpdate(float scalar);
 
-	static FastMatrix* Multiply(FastMatrix* matrix1, FastMatrix* matrix2);
+	static void MultiplyUpdate(FastMatrix* pProductMatrix, FastMatrix* pMatrix1, FastMatrix* pMatrix2);
 
-	static FastMatrix* ComplexConjugateTransform(FastMatrix* matrix);
+	static FastMatrix* Multiply(FastMatrix* pMatrix1, FastMatrix* pMatrix2);
 
-	static FastMatrix* DescendGradient(FastMatrix* X,  FastMatrix* y, float alpha, int numIterations);
+	static FastMatrix* ComplexConjugateTransform(FastMatrix* pMatrix);
+
+	static FastMatrix* DescendGradient(FastMatrix* pXMatrix,  FastMatrix* pYMatrix, float alpha, int numIterations);
 };
 
-extern "C" __declspec(dllexport) FastMatrix* FastMatrix_Create(int rowCount, int columnCount) 
-{ 
-	return new FastMatrix(rowCount, columnCount); 
-}
-
-extern "C" __declspec(dllexport) void FastMatrix_ZeroValues(FastMatrix * matrix)
+extern "C"
 {
-	matrix->ZeroValues();
-}
+	__declspec(dllexport) int FastMatrix_GetRowCount(FastMatrix* pMatrix)
+	{
+		return pMatrix->GetRowCount();
+	}
 
-extern "C" __declspec(dllexport) FastMatrix* FastMatrix_Add(FastMatrix * matrix1, FastMatrix * matrix2)
-{
-	return FastMatrix::Add(matrix1, matrix2);
-}
+	__declspec(dllexport) int FastMatrix_GetColumnCount(FastMatrix* pMatrix)
+	{
+		return pMatrix->GetColumnCount();
+	}
 
-extern "C" __declspec(dllexport) FastMatrix * FastMatrix_Subtract(FastMatrix * matrix1, FastMatrix * matrix2)
-{
-	return FastMatrix::Subtract(matrix1, matrix2);
-}
+	__declspec(dllexport) FastMatrix* FastMatrix_Create(int rowCount, int columnCount)
+	{
+		return new FastMatrix(rowCount, columnCount);
+	}
 
-extern "C" __declspec(dllexport) float FastMatrix_Get(FastMatrix * pFastMatrix, int rowIndex, int columnIndex) 
-{ 
-	return pFastMatrix->Get(rowIndex, columnIndex); 
-}
+	__declspec(dllexport) void FastMatrix_ZeroValues(FastMatrix* pMatrix)
+	{
+		pMatrix->ZeroValues();
+	}
 
-extern "C" __declspec(dllexport) void FastMatrix_Set(FastMatrix * pFastMatrix, float value, int rowIndex, int columnIndex) 
-{ 
-	pFastMatrix->Set(value, rowIndex, columnIndex); 
-}
+	__declspec(dllexport)  FastMatrix* FastMatrix_Add(FastMatrix* pMatrix1, FastMatrix* pMatrix2)
+	{
+		return FastMatrix::Add(pMatrix1, pMatrix2);
+	}
 
-extern "C" __declspec(dllexport) FastMatrix * FastMatrix_ScalarMultiply(float scalar, FastMatrix* matrix2) {
+	__declspec(dllexport) FastMatrix* FastMatrix_Subtract(FastMatrix* pMatrix1, FastMatrix* pMatrix2)
+	{
+		return FastMatrix::Subtract(pMatrix1, pMatrix2);
+	}
 
-	return FastMatrix::ScalarMultiply(scalar, matrix2);
-}
+	__declspec(dllexport) float FastMatrix_Get(FastMatrix* pMatrix, int rowIndex, int columnIndex)
+	{
+		return pMatrix->Get(rowIndex, columnIndex);
+	}
 
-extern "C" __declspec(dllexport) FastMatrix * FastMatrix_Multiply(FastMatrix * matrix1, FastMatrix * matrix2) {
+	__declspec(dllexport) void FastMatrix_Set(FastMatrix* pMatrix, float value, int rowIndex, int columnIndex)
+	{
+		pMatrix->Set(value, rowIndex, columnIndex);
+	}
 
-	return FastMatrix::Multiply(matrix1, matrix2);
-}
+	__declspec(dllexport) FastMatrix* FastMatrix_ScalarMultiply(float scalar, FastMatrix* pMatrix2)
+	{
 
-extern "C" __declspec(dllexport) FastMatrix * FastMatrix_ComplexConjugateTransform(FastMatrix * matrix)
-{
-	return FastMatrix::ComplexConjugateTransform(matrix);
-}
+		return FastMatrix::ScalarMultiply(scalar, pMatrix2);
+	}
 
-extern "C" __declspec(dllexport) FastMatrix * FastMatrix_DescendGradient(FastMatrix * X, FastMatrix * y, float alpha, int numIterations)
-{
-	return FastMatrix::DescendGradient(X, y, alpha, numIterations);
-}
+	__declspec(dllexport) FastMatrix* FastMatrix_Multiply(FastMatrix* pMatrix1, FastMatrix* pMatrix2)
+	{
 
-extern "C" __declspec(dllexport) float FastMatrix_ComputePrediction(FastMatrix* theta, FastMatrix* x)
-{
-	return theta->ComputePrediction(x);
-}
+		return FastMatrix::Multiply(pMatrix1, pMatrix2);
+	}
 
-extern "C" __declspec(dllexport) void FastMatrix_Delete(FastMatrix * pFastMatrix) 
-{ 
-	delete pFastMatrix; 
+	__declspec(dllexport) FastMatrix* FastMatrix_ComplexConjugateTransform(FastMatrix* pMatrix)
+	{
+		return FastMatrix::ComplexConjugateTransform(pMatrix);
+	}
+
+	__declspec(dllexport) FastMatrix* FastMatrix_DescendGradient(FastMatrix* pXMatrix, FastMatrix* pYMatrix, float alpha, int numIterations)
+	{
+		return FastMatrix::DescendGradient(pXMatrix, pYMatrix, alpha, numIterations);
+	}
+
+	__declspec(dllexport) float FastMatrix_ComputePrediction(FastMatrix* pThetaMatrix, FastMatrix* pXmatrix)
+	{
+		return pThetaMatrix->ComputePrediction(pXmatrix);
+	}
+
+	__declspec(dllexport) FastMatrix* FastMatrix_AddOnesColumn(FastMatrix* pMatrix)
+	{
+		return FastMatrix::AddOnesColumn(pMatrix);
+	}
+
+	__declspec(dllexport) FastMatrix* FastMatrix_AddSquaredColumns(FastMatrix* pMatrix)
+	{
+		return FastMatrix::AddSquaredColumns(pMatrix);
+	}
+
+	__declspec(dllexport) void FastMatrix_Delete(FastMatrix* pMatrix)
+	{
+		delete pMatrix;
+	}
 }

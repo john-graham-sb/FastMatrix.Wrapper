@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\FastMatrix.Library\FastMatrix.Library.vcxproj" />
     <ProjectReference Include="..\FastMatrix.Wrapper\FastMatrix.Wrapper.csproj" />
   </ItemGroup>
 

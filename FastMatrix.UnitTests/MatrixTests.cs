@@ -9,7 +9,7 @@ namespace FastMatrix.UnitTests
         [TestMethod]
         public void MatrixShouldSetAndGetValues()
         {
-            Matrix matrix = new(3, 2);
+            using Matrix matrix = new(3, 2);
             matrix[0, 0] = 1;
             matrix[1, 0] = 2;
             matrix[2, 0] = 3;
@@ -35,7 +35,7 @@ namespace FastMatrix.UnitTests
         [TestMethod]
         public void MatrixShouldMultiply()
         {
-            Matrix matrix1 = new(3, 2);
+            using Matrix matrix1 = new(3, 2);
             matrix1[0, 0] = 1;
             matrix1[1, 0] = 2;
             matrix1[2, 0] = 3;
@@ -43,11 +43,11 @@ namespace FastMatrix.UnitTests
             matrix1[1, 1] = 5;
             matrix1[2, 1] = 6;
 
-            Matrix matrix2 = new(2, 1);
+            using Matrix matrix2 = new(2, 1);
             matrix2[0, 0] = 1;
             matrix2[1, 0] = 2;
 
-            Matrix productMatrix = matrix1 * matrix2;
+            using Matrix productMatrix = matrix1 * matrix2;
 
             float nine = productMatrix[0, 0];
             float twelve = productMatrix[1, 0];
@@ -61,14 +61,14 @@ namespace FastMatrix.UnitTests
         [TestMethod]
         public void MatrixShouldScalarMultiply()
         {
-            Matrix matrix = new(3, 1);
+            using Matrix matrix = new(3, 1);
             matrix[0, 0] = 1;
             matrix[1, 0] = 2;
             matrix[2, 0] = 3;
 
             float scalar = 2;
 
-            Matrix productMatrix = scalar * matrix;
+            using Matrix productMatrix = scalar * matrix;
 
             float two = productMatrix[0, 0];
             float four = productMatrix[1, 0];
@@ -82,14 +82,14 @@ namespace FastMatrix.UnitTests
         [TestMethod]
         public void MatrixShouldScalarDivide()
         {
-            Matrix matrix = new(3, 1);
+            using Matrix matrix = new(3, 1);
             matrix[0, 0] = 2;
             matrix[1, 0] = 4;
             matrix[2, 0] = 6;
 
             float scalar = 2;
 
-            Matrix productMatrix = matrix / scalar;
+            using Matrix productMatrix = matrix / scalar;
 
             float one = productMatrix[0, 0];
             float two = productMatrix[1, 0];
@@ -103,7 +103,7 @@ namespace FastMatrix.UnitTests
         [TestMethod]
         public void MatrixShouldAdd()
         {
-            Matrix matrix1 = new(3, 2);
+            using Matrix matrix1 = new(3, 2);
             matrix1[0, 0] = 1;
             matrix1[1, 0] = 2;
             matrix1[2, 0] = 3;
@@ -111,7 +111,7 @@ namespace FastMatrix.UnitTests
             matrix1[1, 1] = 5;
             matrix1[2, 1] = 6;
 
-            Matrix matrix2 = new(3, 2);
+            using Matrix matrix2 = new(3, 2);
             matrix2[0, 0] = 7;
             matrix2[1, 0] = 8;
             matrix2[2, 0] = 9;
@@ -119,7 +119,7 @@ namespace FastMatrix.UnitTests
             matrix2[1, 1] = 11;
             matrix2[2, 1] = 12;
 
-            Matrix sumnMatrix = matrix1 + matrix2;
+            using Matrix sumnMatrix = matrix1 + matrix2;
 
             float eight = sumnMatrix[0, 0];
             float ten = sumnMatrix[1, 0];
@@ -139,7 +139,7 @@ namespace FastMatrix.UnitTests
         [TestMethod]
         public void MatrixShouldSubtract()
         {
-            Matrix matrix1 = new(3, 2);
+            using Matrix matrix1 = new(3, 2);
             matrix1[0, 0] = 8;
             matrix1[1, 0] = 10;
             matrix1[2, 0] = 12;
@@ -147,7 +147,7 @@ namespace FastMatrix.UnitTests
             matrix1[1, 1] = 16;
             matrix1[2, 1] = 18;
 
-            Matrix matrix2 = new(3, 2);
+            using Matrix matrix2 = new(3, 2);
             matrix2[0, 0] = 7;
             matrix2[1, 0] = 8;
             matrix2[2, 0] = 9;
@@ -155,7 +155,7 @@ namespace FastMatrix.UnitTests
             matrix2[1, 1] = 11;
             matrix2[2, 1] = 12;
 
-            Matrix differenceMatrix = matrix1 - matrix2;
+            using Matrix differenceMatrix = matrix1 - matrix2;
 
             float one = differenceMatrix[0, 0];
             float two = differenceMatrix[1, 0];
@@ -175,7 +175,8 @@ namespace FastMatrix.UnitTests
         [TestMethod]
         public void MatrixShouldDescendGradient()
         {
-            Matrix X = new(3, 2);
+            using Matrix X = new(3, 2);
+
             X[0, 0] = 1;
             X[1, 0] = 1;
             X[2, 0] = 1;
@@ -183,26 +184,38 @@ namespace FastMatrix.UnitTests
             X[1, 1] = 2;
             X[2, 1] = 3;
 
-            Matrix y = new(3, 1);
+            using Matrix y = new(3, 1);
+
             y[0, 0] = 1;
             y[1, 0] = 2;
             y[2, 0] = 3;
 
-            Matrix theta = Matrix.DescendGradient(X, y, 0.1F, 1000);
+            using Matrix theta = Matrix.DescendGradient(X, y, 0.1F, 500);
 
-            Matrix newX = new(3, 2);
-            newX[0, 0] = 1;
-            newX[1, 0] = 5;
+            using Matrix newX1 = new(1, 2);
 
-            float prediction = theta.ComputePrediction(newX);
+            newX1[0, 0] = 1;
+            newX1[1, 0] = 5;
 
-            Assert.AreEqual(prediction, 5, 0.1);
+            float prediction1 = theta.ComputePrediction(newX1);
+
+            Assert.AreEqual(prediction1, 5, 0.1);
+
+            using Matrix newX2 = new(1, 2);
+
+            newX2[0, 0] = 1;
+            newX2[1, 0] = 10;
+
+            float prediction2 = theta.ComputePrediction(newX2);
+
+            Assert.AreEqual(prediction2, 10, 0.1);
         }
 
         [TestMethod]
         public void MatrixShouldTranform()
         {
-            Matrix X = new(20, 2);
+            using Matrix X = new(20, 2);
+
             X[0, 0] = 1;
             X[1, 0] = 2;
             X[2, 0] = 3;
@@ -223,7 +236,6 @@ namespace FastMatrix.UnitTests
             X[17, 0] = 18;
             X[18, 0] = 19;
             X[19, 0] = 20;
-
             X[0, 1] = 1;
             X[1, 1] = 1;
             X[2, 1] = 1;
@@ -245,7 +257,7 @@ namespace FastMatrix.UnitTests
             X[18, 1] = 1;
             X[19, 1] = 1;
 
-            Matrix xTransformed = X.ComplexConjugateTranspose();
+            using Matrix xTransformed = X.ComplexConjugateTranspose();
 
             float val1 = xTransformed[0, 0];
             float val2 = xTransformed[0, 1];
@@ -267,7 +279,6 @@ namespace FastMatrix.UnitTests
             float val18 = xTransformed[0, 17];
             float val19 = xTransformed[0, 18];
             float val20 = xTransformed[0, 19];
-
             float val21 = xTransformed[1, 0];
             float val22 = xTransformed[1, 1];
             float val23 = xTransformed[1, 2];
@@ -293,7 +304,7 @@ namespace FastMatrix.UnitTests
             Assert.AreEqual(2, val2, 0.1);
             Assert.AreEqual(3, val3, 0.1);
             Assert.AreEqual(4, val4, 0.1);
-            Assert.AreEqual(5,val5, 0.1);
+            Assert.AreEqual(5, val5, 0.1);
             Assert.AreEqual(6, val6, 0.1);
             Assert.AreEqual(7, val7, 0.1);
             Assert.AreEqual(8, val8, 0.1);
@@ -301,7 +312,7 @@ namespace FastMatrix.UnitTests
             Assert.AreEqual(10, val10, 0.1);
             Assert.AreEqual(11, val11, 0.1);
             Assert.AreEqual(12, val12, 0.1);
-            Assert.AreEqual(13,val13, 0.1);
+            Assert.AreEqual(13, val13, 0.1);
             Assert.AreEqual(14, val14, 0.1);
             Assert.AreEqual(15, val15, 0.1);
             Assert.AreEqual(16, val16, 0.1);
@@ -332,6 +343,5 @@ namespace FastMatrix.UnitTests
             Assert.AreEqual(1, val39, 0.1);
             Assert.AreEqual(1, val40, 0.1);
         }
-
     }
 }
