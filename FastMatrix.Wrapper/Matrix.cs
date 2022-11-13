@@ -2,7 +2,8 @@
 {
     public partial class Matrix : IDisposable
     {
-        private IntPtr fastMatrix;
+        private readonly IntPtr fastMatrix;
+
         public int RowCount
         {
             get; private set;
@@ -12,49 +13,64 @@
             get; private set;
         }
 
+        private Matrix()
+        {
+            throw new InvalidOperationException($"Instantiation requires dimensions.");
+        }
+
         public Matrix(int rowCount, int columnCount)
         {
-            fastMatrix = FastMatrix_Create(rowCount, columnCount);
+            this.fastMatrix = FastMatrix_Create(rowCount, columnCount);
 
-            RowCount = rowCount;
-            ColumnCount = columnCount;
+            this.RowCount = rowCount;
+            this.ColumnCount = columnCount;
         }
 
         private Matrix(IntPtr fastMatrix)
         {
             this.fastMatrix = fastMatrix;
 
-            RowCount = FastMatrix_GetRowCount(fastMatrix);
-            ColumnCount = FastMatrix_GetColumnCount(fastMatrix);
+            this.RowCount = FastMatrix_GetRowCount(fastMatrix);
+            this.ColumnCount = FastMatrix_GetColumnCount(fastMatrix);
         }
 
-        public static bool CreateFromCSVFile(out Matrix XMatrix, out Matrix YMatrix, string filePath, int recordCount)
+        public static bool TryCreateFromCSVFile(out Matrix? XMatrix, out Matrix? YMatrix, string csvFilePath, int recordCount)
         {
-            var lines = File.ReadAllLines(filePath)
+            XMatrix = null;
+            YMatrix = null;
+
+            try
+            {
+                var lines = File.ReadAllLines(csvFilePath)
             .Select(a => a.Split(',')).Where(line => !line.Any(str => str == string.Empty)).Take(recordCount).ToList();
 
-            int rowCount = lines.Count;
-            int columnCount = lines.First().Length - 1;
+                int rowCount = lines.Count;
+                int columnCount = lines.First().Length - 1;
 
-            XMatrix = new Matrix(rowCount, columnCount);
-            YMatrix = new Matrix(rowCount, 1);
+                XMatrix = new Matrix(rowCount, columnCount);
+                YMatrix = new Matrix(rowCount, 1);
 
-            int rowIndex = 0;
-            foreach (var line in lines)
-            {
-                int columnIndex = 0;
-                foreach (var lineElement in line.Take(columnCount))
+                int rowIndex = 0;
+                foreach (var line in lines)
                 {
-                    XMatrix[rowIndex, columnIndex] = float.Parse(lineElement);
+                    int columnIndex = 0;
+                    foreach (var lineElement in line.Take(columnCount))
+                    {
+                        XMatrix[rowIndex, columnIndex] = float.Parse(lineElement);
 
-                    columnIndex++;
+                        columnIndex++;
+                    }
+
+                    var finalLineElement = line.Skip(columnCount).Take(1).First();
+
+                    YMatrix[rowIndex, 0] = float.Parse(finalLineElement);
+
+                    rowIndex++;
                 }
-
-                var finalLineElement = line.Skip(columnCount).Take(1).First();
-
-                YMatrix[rowIndex, 0] = float.Parse(finalLineElement);
-
-                rowIndex++;
+            }
+            catch (Exception)
+            {
+                return false;
             }
 
             return true;
@@ -62,8 +78,8 @@
 
         public float this[int rowIndex, int columnIndex]
         {
-            get => FastMatrix_Get(fastMatrix, rowIndex, columnIndex);
-            set => FastMatrix_Set(fastMatrix, value, rowIndex, columnIndex);
+            get => FastMatrix_Get(this.fastMatrix, rowIndex, columnIndex);
+            set => FastMatrix_Set(this.fastMatrix, value, rowIndex, columnIndex);
         }
 
         public static Matrix operator *(Matrix matrix1, Matrix matrix2)
@@ -108,9 +124,18 @@
             return new Matrix(fastMatrix);
         }
 
+        public static Matrix DescendGradientOptimized(Matrix XMatrix, Matrix YMatrix, float alpha, int numIterations)
+        {
+            IntPtr fastMatrix = FastMatrix_DescendGradient_Optimized(XMatrix.fastMatrix, YMatrix.fastMatrix, alpha, numIterations);
+
+            return new Matrix(fastMatrix);
+        }
+
         public float ComputePrediction(Matrix XRowMatrix)
         {
-            return FastMatrix_ComputePrediction(this.fastMatrix, XRowMatrix.fastMatrix);
+            float prediction = FastMatrix_ComputePrediction(this.fastMatrix, XRowMatrix.fastMatrix);
+
+            return prediction;
         }
 
         public Matrix ComplexConjugateTranspose()
@@ -136,7 +161,7 @@
 
         public void Dispose()
         {
-            FastMatrix_Delete(fastMatrix);
+            FastMatrix_Delete(this.fastMatrix);
         }
     }
 }
